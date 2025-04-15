@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -32,6 +33,8 @@ class Category extends Model
                 'name' => $request->name
             ]);
             DB::commit();
+            $category = DB::table("categories")->select("name", "idCat")->get();
+            Cache::set("list_category", $category, 1440);
             return [
                 'idCat' => $Category->idCat,
                 'name' => $Category->name,
@@ -56,6 +59,8 @@ class Category extends Model
             }
             $cat->delete();
             DB::commit();
+            $category = DB::table("categories")->select("name", "idCat")->get();
+            Cache::set("list_category", $category, 1440);
             return 'true';
         } catch (Throwable $e) {
             DB::rollBack();
@@ -84,8 +89,11 @@ class Category extends Model
             $cat->name = $request->name;
             $cat->save();
             DB::commit();
+            $category = DB::table("categories")->select("name", "idCat")->get();
+            Cache::set("list_category", $category, 1440);
             return 'success';
         } catch (Throwable $e) {
+            Log::error($e);
             DB::rollBack();
             return 'error';
         }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Http\Responses\ApiResponse;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Throwable;
 use Illuminate\Support\Facades\Auth;
@@ -25,7 +26,12 @@ class CustomerController extends Controller
     {
         return view('User.RegisterView');
     }
-    public function Logout(Request $request)
+    /**
+     *
+     * @param Request $request
+     * @return ApiResponse
+     */
+    public function Logout(Request $request): JsonResponse
     {
         try {
             $result = $this->user->LogoutModel($request);
@@ -42,7 +48,12 @@ class CustomerController extends Controller
         $user = Auth::user();
         return view('User.ChangePassView', ['user' => $user]);
     }
-    public function changePass(Request $request)
+    /**
+     *
+     * @param Request $request
+     * @return ApiResponse
+     */
+    public function changePass(Request $request): JsonResponse
     {
         try {
             $result = $this->user->updatePassword($request);
@@ -61,7 +72,12 @@ class CustomerController extends Controller
             return ApiResponse::Error(null, 'Some wrong occur', 'error', 400);
         }
     }
-    public function sendOTPForgetPassController(Request $request)
+    /**
+     *
+     * @param Request $request
+     * @return ApiResponse
+     */
+    public function sendOTPForgetPassController(Request $request): JsonResponse
     {
         try {
             $result = $this->user->sendOTPForgetPasswordAccountModel($request->email);
@@ -76,7 +92,12 @@ class CustomerController extends Controller
             return ApiResponse::Error(null, 'Error', 'error', 500);
         }
     }
-    public function resetPasswordController(Request $request)
+    /**
+     *
+     * @param Request $request
+     * @return ApiResponse
+     */
+    public function resetPasswordController(Request $request): JsonResponse
     {
         try {
             $result = $this->user->ResetPasswordAccountModel(($request));

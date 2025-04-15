@@ -5,6 +5,7 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Http\Responses\ApiResponse;
 use App\Models\Cart;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -16,10 +17,13 @@ class CartController extends Controller
     {
         return view('User.CartView');
     }
-    public function Checkout(Request $request)
+    /**
+     *
+     * @param Request $request
+     * @return ApiResponse
+     */
+    public function Checkout(Request $request): JsonResponse
     {
-        // Log::info($request->all());
-        // return response()->json(['data' => $request->all(), 'user' => Auth::user()]);
         try {
             $model = new Cart();
             $result = $model->CheckoutModel($request);

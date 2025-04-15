@@ -7,6 +7,7 @@ use App\Http\Responses\ApiResponse;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Category;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -31,7 +32,12 @@ class ProductUserController extends Controller
             return view('User.ProductView', ['products' => $products, 'category' => $category]);
         }
     }
-    public function getProductAjax()
+    /**
+     *
+     * @param Request $request
+     * @return ApiResponse
+     */
+    public function getProductAjax(): JsonResponse
     {
         try {
             $firstIdCat = Category::select('idCat')->first();
@@ -45,13 +51,18 @@ class ProductUserController extends Controller
             return ApiResponse::Error(null, 'Có lỗi xảy ra !', 'error', 500);
         }
     }
-    public function getDetail($id, $name)
+    /**
+     *
+     * @param string $id
+     * @param string $name
+     * @return view
+     */
+    public function getDetail(string $id, string $name)
     {
         try {
             $model = new Product();
             $product = $model->getDetailProductModel($id, $name);
             $productRelated = $model->getRelatedProduct($id);
-            // dd($productRelated)
             return view("User.ProductDetailView", ['product' => $product, 'productRelated' => $productRelated]);
         } catch (Throwable $e) {
             return view("template.404_NOT_FOUND");

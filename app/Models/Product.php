@@ -143,11 +143,10 @@ class Product extends Model
     public function getListCategory(): ?Collection
     {
         try {
-            // $cat = DB::table("categories")->select("name", "idCat")->get();
-            // $cat = Cache::remember('list_category', 1440, function () {
-            //     return DB::table("categories")->select("name", "idCat")->get();
-            // });
-            $cat = DB::table("categories")->select("name", "idCat")->get();
+
+            $cat = Cache::remember('list_category', 1440, function () {
+                return DB::table("categories")->select("name", "idCat")->get();
+            });
             return $cat;
         } catch (Throwable $e) {
             Log::error($e);
@@ -185,6 +184,7 @@ class Product extends Model
                     $imageProduct->save();
                 }
             }
+            // update cache list category
             DB::commit();
             return true;
         } catch (Throwable $e) {
