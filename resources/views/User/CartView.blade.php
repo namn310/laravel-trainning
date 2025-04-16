@@ -219,7 +219,7 @@
             <input type="radio" value="Thanh toán bằng VNPAY" name="payment" id="payment3">
             <label style="font-weight: bolder;" for="payment-3">Thanh toán bằng VNPAY</label>
             <div class="payment3-detail">
-              <button class="btn btn-white d-flex" type="submit" style="width:300px;height:80px">
+              <button class="btn btn-white d-flex btnRedirectVNPAY" type="button" style="width:300px;height:80px">
                 <p class="mt-3 me-2"><strong>Thanh toán VNPay </strong></p>
                 <img src="{{ asset('assets/img/vnpay-logo-vinadesign-25-12-57-55.jpg') }}"
                   style="width:80px;height:80px" class="img-fluid">

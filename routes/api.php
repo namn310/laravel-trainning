@@ -16,7 +16,6 @@ use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\VoucherController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\VNPAYController;
 use App\Http\Controllers\User\CommentController;
 use App\Http\Controllers\GoogleController;
 use App\Http\Controllers\User\OrderUserController;
@@ -27,6 +26,7 @@ use App\Http\Controllers\User\ProductUserController;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Service;
+use App\Services\VNPAYPayment;
 
 Route::prefix('auth')->group(function () {
     Route::post('product/findBySearch', [ProductController::class, 'findProductByName']);
@@ -47,6 +47,7 @@ Route::prefix('auth')->group(function () {
 Route::middleware('auth:api')->group(function () {
     Route::prefix('user')->group(function () {
         Route::post("cart/checkout", [CartController::class, 'Checkout']);
+        Route::post("cart/makeUrl/VNPAY", [VNPAYPayment::class, 'createPayment']);
         Route::get('product', [ProductUserController::class, 'getProductAjax']);
         Route::post('account/logout', [CustomerController::class, 'Logout']);
         Route::get('order', [OrderUserController::class, 'getOrderList']);

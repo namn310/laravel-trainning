@@ -15,7 +15,7 @@ use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\VoucherController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\VNPAYController;
+use App\Services\VNPAYPayment;
 use App\Http\Controllers\User\CommentController;
 use App\Http\Controllers\GoogleController;
 use App\Http\Controllers\User\OrderUserController;
@@ -62,6 +62,9 @@ Route::prefix('')->group(function () {
     })->name('user.contact');
     //Cart
     Route::get('cart', [CartController::class, 'index'])->name('user.cart');
+    Route::get('vn_pay/vnpay_return', [CartController::class, 'saveOrderVnpay'])->name('vnpay.saveOrderToDB');
+    Route::get('vn_pay/vnpay_create_payment', [VNPAYPayment::class, 'createPayment'])->name('vnpay.createPayment');
+    Route::get('vn_pay/vnpay_ipn', [VNPAYPayment::class, 'vnpay_ipn'])->name('vnpay.vnpay_ipn');
     Route::get('product/detail/{id}/{name}', [ProductUserController::class, 'getDetail'])->name('user.productDetail');
     Route::get('product/{id}', [ProductUserController::class, 'index'])->name('user.product');
 });

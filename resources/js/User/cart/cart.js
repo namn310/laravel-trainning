@@ -93,6 +93,17 @@ export const TotalCostInCart = function () {
     });
     return formatCost(cost);
 };
+export const TotalCostInCartNoFormat = function () {
+    var cost = 0;
+    cart.forEach((e) => {
+        if (e.discount > 0) {
+            cost += (e.cost - e.cost * (e.discount / 100)) * e.count;
+        } else {
+            cost += e.count * e.cost;
+        }
+    });
+    return parseInt(cost);
+};
 export const CalculateCostOfProduct = function (id) {
     var e = cart.find((a) => a.idPro === id);
     if (e) {
@@ -122,6 +133,63 @@ function updateCostInView() {
         $("#ListProductInCart").addClass("d-none");
         $(".right-part-cart").addClass("d-none");
     }
+}
+function makePaymentVNPAY(data) {
+    const apiFetch = "/api/user/cart/makeUrl/VNPAY";
+    const passportToken = localStorage.getItem("authTokenPassport_user");
+    $.ajax({
+        url: apiFetch,
+        type: "POST",
+        headers: {
+            Authorization: "Bearer " + passportToken,
+        },
+        data: data,
+        success: function (response) {
+            console.log(response);
+        },
+    });
+}
+function makePaymentCash(data) {
+    const apiFetch = "/api/user/cart/checkout";
+    const passportToken = localStorage.getItem("authTokenPassport_user");
+    $.ajax({
+        url: apiFetch,
+        type: "POST",
+        headers: {
+            Authorization: "Bearer " + passportToken,
+        },
+        data: data,
+        success: function (response) {
+            if (response.status === "success") {
+                $.toast({
+                    heading: "Thông báo",
+                    text: response.message,
+                    showHideTransition: "slide",
+                    icon: response.status,
+                    position: "bottom-right",
+                });
+                DestroyCart();
+                $("#ListProductInCart").addClass("d-none");
+                $(".right-part-cart").addClass("d-none");
+                $("#name").val("");
+                $("#phonenumber").val("");
+                $("#address").val("");
+                $("#description").val("");
+                $(".totalInCart").addClass("d-none");
+                $("#pay-form").addClass("d-none");
+                $(".loading-overlay").addClass("d-none");
+            } else {
+                $.toast({
+                    heading: "Thông báo",
+                    text: response.message,
+                    showHideTransition: "slide",
+                    icon: response.status,
+                    position: "bottom-right",
+                });
+                $(".loading-overlay").addClass("d-none");
+            }
+        },
+    });
 }
 export const renderCart = function () {
     try {
@@ -276,11 +344,6 @@ export const renderCart = function () {
         $(".form-checkout-cart").on("submit", function (event) {
             event.preventDefault();
             $(".loading-overlay").removeClass("d-none");
-            const apiFetch = "/api/user/cart/checkout";
-            const csfrToken = $('meta[name="csrf-token"]').attr("content");
-            const passportToken = localStorage.getItem(
-                "authTokenPassport_user"
-            );
             var payment_COD = document.getElementById("payment1");
             var payment_banking = document.getElementById("payment2");
             var payment_vnpay = document.getElementById("payment3");
@@ -294,6 +357,7 @@ export const renderCart = function () {
             if (payment_vnpay.checked) {
                 payment_Method = "Thanh toán bằng VNPAY";
             }
+            const csfrToken = $('meta[name="csrf-token"]').attr("content");
             var data = {
                 _token: csfrToken,
                 BankCode: $("#bankCode").val().trim(),
@@ -308,44 +372,46 @@ export const renderCart = function () {
                 Total: TotalCostInCart(),
                 Cart: cart,
             };
-            $.ajax({
-                url: apiFetch,
-                type: "POST",
-                headers: {
-                    Authorization: "Bearer " + passportToken,
-                },
-                data: data,
-                success: function (response) {
-                    if (response.status === "success") {
-                        $.toast({
-                            heading: "Thông báo",
-                            text: response.message,
-                            showHideTransition: "slide",
-                            icon: response.status,
-                            position: "bottom-right",
-                        });
-                        DestroyCart();
-                        $("#ListProductInCart").addClass("d-none");
-                        $(".right-part-cart").addClass("d-none");
-                        $("#name").val("");
-                        $("#phonenumber").val("");
-                        $("#address").val("");
-                        $("#description").val("");
-                        $(".totalInCart").addClass("d-none");
-                        $("#pay-form").addClass("d-none");
-                        $(".loading-overlay").addClass("d-none");
-                    } else {
-                        $.toast({
-                            heading: "Thông báo",
-                            text: response.message,
-                            showHideTransition: "slide",
-                            icon: response.status,
-                            position: "bottom-right",
-                        });
-                        $(".loading-overlay").addClass("d-none");
-                    }
-                },
-            });
+            if (payment_Method !== "Thanh toán bằng VNPAY") {
+                makePaymentCash(data);
+                return;
+            }
+        });
+        // THANH TOÁN VNPAY
+        $(".btnRedirectVNPAY").on("click", function (event) {
+            event.preventDefault();
+            $(".loading-overlay").removeClass("d-none");
+            var payment_COD = document.getElementById("payment1");
+            var payment_banking = document.getElementById("payment2");
+            var payment_vnpay = document.getElementById("payment3");
+            var payment_Method = null;
+            if (payment_COD.checked) {
+                payment_Method = "Thanh toán bằng phương thức COD";
+            }
+            if (payment_banking.checked) {
+                payment_Method = "Thanh toán bằng phương thức chuyển khoản";
+            }
+            if (payment_vnpay.checked) {
+                payment_Method = "Thanh toán bằng VNPAY";
+            }
+            const csfrToken = $('meta[name="csrf-token"]').attr("content");
+            var data = {
+                _token: csfrToken,
+                BankCode: $("#bankCode").val().trim(),
+                Language: $("#language").val().trim(),
+                Name: $("#name").val().trim(),
+                Phone: $("#phonenumber").val().trim(),
+                Address: $("#address").val().trim(),
+                IdVoucher: $("#idVoucher").val().trim(),
+                DiscountVoucher: 20,
+                Note: $("#description").val().trim(),
+                Method_Payment: payment_Method,
+                Total: TotalCostInCartNoFormat(),
+                Cart: cart,
+            };
+            console.log(data);
+            makePaymentVNPAY(data);
+            return;
         });
     } catch (e) {
         console.log(e);
