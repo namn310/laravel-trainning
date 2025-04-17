@@ -25,39 +25,30 @@ class Cart extends Model
             $id = $user->id;
             $paymentMethod = $request->Method_Payment;
             $emailCustomer = $user->email;
-            $order = new Order();
-            $order->idCus = $id;
-            $order->status = 0;
-            $order->address = $request->Address;
-            $order->note = $request->Note;
-            $order->thanhtoan = $paymentMethod;
-            $order->created_at = now('Asia/Ho_Chi_Minh');
             if ($request->IdVoucher && $request->IdVoucher > 0) {
                 $voucherUser = VoucherUser::find($request->input('idVoucher'));
                 $voucherId = $voucherUser->id_voucher;
-                $order->idVoucher = $voucherId;
             }
             if (!$request->IdVoucher && $request->IdVoucher <= 0) {
-                $order->idVoucher = null;
+                $voucherId = null;
             }
-            $order->save();
+            $order = new Order();
+            $order = $order->CreateOrder(0, $request->Address, $request->Note, $paymentMethod, $id, $voucherId);
             $idLatestOrder = $order->id;
             foreach ($request->Cart as $product) {
                 $idPro = $product['idPro'];
-                // thêm dữ liệu vào bảng orderdetail
+                // insert data order into OrderDetail table
                 OrderDetail::create([
                     'number' => $product['count'],
                     'idPro' => $idPro,
                     'price' => $product['cost'],
                     'idOrder' => $idLatestOrder
                 ]);
-                // giảm số lượng sản phẩm
-                $updatePro = product::find($idPro);
+                // Decrease count product
+                $updatePro = Product::find($idPro);
                 $updatePro->count = $updatePro->count - $product['count'];
-                // dd($pro->count - $row->number);
                 $updatePro->update();
             }
-            // Dùng voucher xong thì giảm số lượng voucher;
             if ($request->IdVoucher && $request->IdVoucher > 0) {
                 $voucherUser = VoucherUser::find($request->IdVoucher);
                 $soluong = $voucherUser->soluong;
@@ -65,7 +56,7 @@ class Cart extends Model
                 $voucherUser->update();
             }
             if ($paymentMethod !== 'Thanh toán bằng VNPAY') {
-                // tạo dữ liệu để truyền vào mail gửi thông báo
+                // create data to tranfer into email sending to user
                 $product = new Order();
                 $totalPrice = (int)$request->Total;
                 $OrderDetail = DB::table("order_detail as o")
@@ -74,7 +65,6 @@ class Cart extends Model
                     ->select('o.id', 'o.number', 'o.idPro', 'o.price', 'o.idOrder', 'p.idPro', 'p.namePro', 'p.cost', 'p.discount')->get();
                 // $Order = Order::select()->where('id', 8)->get();
                 $Order = Order::find($idLatestOrder);
-                Log::info($OrderDetail);
                 $discountVoucher = $request->DiscountVoucher;
                 $dataOrder = [
                     'Order' => $Order,

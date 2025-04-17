@@ -48,15 +48,26 @@ class Order extends Model
      * @param int $idCus Customer's ID.
      * @param string $idVoucher Voucher code if has.
      *
-     * @return void
+     * @return Order|null
      */
     public function CreateOrder(int $status, string $Address, string $note, string $paymentMethod, int $idCus, string $idVoucher)
     {
         try {
+            DB::beginTransaction();
             $order = new Order();
             $order->status = $status;
             $order->address = $Address;
+            $order->note = $note;
+            $order->thanhtoan = $paymentMethod;
+            $order->idCus = $idCus;
+            $order->idVoucher = $idVoucher;
+            $order->save();
+            DB::commit();
+            return $order;
         } catch (Throwable $e) {
+            Log::error($e->getMessage());
+            DB::rollBack();
+            return null;
         }
     }
     /**
