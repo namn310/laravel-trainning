@@ -28,6 +28,7 @@ use App\Models\Product;
 use App\Models\Service;
 use App\Services\VNPAYPayment;
 
+Route::get('vn_pay/vnpay_return', [CartController::class, 'CompleteOrderController'])->name('vnpay.saveOrderToDB');
 Route::prefix('auth')->group(function () {
     Route::post('product/findBySearch', [ProductController::class, 'findProductByName']);
     Route::post('admin/login', [UserController::class, 'checkLogin']);
@@ -47,7 +48,7 @@ Route::prefix('auth')->group(function () {
 Route::middleware('auth:api')->group(function () {
     Route::prefix('user')->group(function () {
         Route::post("cart/checkout", [CartController::class, 'Checkout']);
-        Route::post("cart/makeUrl/VNPAY", [VNPAYPayment::class, 'createPayment']);
+        Route::post("cart/makeUrl/VNPAY", [CartController::class, 'createPaymentVNPay']);
         Route::get('product', [ProductUserController::class, 'getProductAjax']);
         Route::post('account/logout', [CustomerController::class, 'Logout']);
         Route::get('order', [OrderUserController::class, 'getOrderList']);

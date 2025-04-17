@@ -44,7 +44,9 @@ class Product extends Model
     public function getListproduct(): LengthAwarePaginator|null
     {
         try {
-            $products = Product::with('ImageProduct')->orderBy('idPro', 'desc')->paginate(5);
+            $products = Product::with('ImageProduct')
+                ->orderBy('idPro', 'desc')
+                ->paginate(5);
             return $products;
         } catch (Throwable $e) {
             Log::error($e);
@@ -59,11 +61,18 @@ class Product extends Model
     public function editModel(string $id, string $name): ?array
     {
         try {
-            $product = Product::with('ImageProduct')->where('idPro', $id)->first();
+            $product = Product::with('ImageProduct')
+                ->where('idPro', $id)
+                ->first();
             $category = Cache::remember('list_category', 1440, function () {
                 return Category::all();
             });
-            $nameCat = Category::where('idCat', $product->idCat)->select('name', 'idCat')->first();
+            $nameCat = Category::where('idCat', $product->idCat)
+                ->select(
+                    'name',
+                    'idCat'
+                )
+                ->first();
             return [
                 'category' => $category,
                 'product' => $product,
@@ -125,7 +134,10 @@ class Product extends Model
      */
     public function getImgProduct($id): string
     {
-        $img = DB::table('image_products')->select('image')->where('idPro', $id)->limit(1)->first();
+        $img = DB::table('image_products')
+            ->select('image')
+            ->where('idPro', $id)
+            ->first();
         return $img->image;
     }
     /**
@@ -139,7 +151,9 @@ class Product extends Model
             // $cat = Cache::remember('list_category', 1440, function () {
             //     return DB::table("categories")->select("name", "idCat")->get();
             // });
-            $cat = DB::table("categories")->select("name", "idCat")->get();
+            $cat = DB::table("categories")
+                ->select("name", "idCat")
+                ->get();
             return $cat;
         } catch (Throwable $e) {
             Log::error($e);
@@ -193,7 +207,9 @@ class Product extends Model
     {
         try {
             DB::beginTransaction();
-            $imageProduct = ImageProduct::where('idPro', $request->idPro)->select('id', 'idPro', 'image')->get();
+            $imageProduct = ImageProduct::where('idPro', $request->idPro)
+                ->select('id', 'idPro', 'image')
+                ->get();
             foreach ($imageProduct as $row) {
                 if (File::exists('assets/img-add-pro/' . $row->image)) {
                     File::delete('assets/img-add-pro/' . $row->image);
@@ -239,7 +255,9 @@ class Product extends Model
     public function getDetailProductModel($id, $name): ?Product
     {
         try {
-            $product = Product::with("ImageProduct")->where("idPro", $id)->first();
+            $product = Product::with("ImageProduct")
+                ->where("idPro", $id)
+                ->first();
             return $product;
         } catch (Throwable $e) {
             Log::error($e);
@@ -256,7 +274,10 @@ class Product extends Model
         try {
             $product = Product::find($id);
             $idCat = $product->idCat;
-            $product = Product::with("ImageProduct")->where("idCat", $idCat)->where("idPro", '!=', $id)->get();
+            $product = Product::with("ImageProduct")
+                ->where("idCat", $idCat)
+                ->where("idPro", '!=', $id)
+                ->get();
             return $product;
         } catch (Throwable $e) {
             Log::error($e);
@@ -271,9 +292,14 @@ class Product extends Model
     public function getListProductByName(String $text): ?LengthAwarePaginator
     {
         try {
-            // Log::info($text);
-            $product = Product::with('ImageProduct')->where('namePro', 'LIKE', '%' . $text . '%')->orderBy('idPro', 'desc')->paginate(5);
-            // Log::info($text);
+            $product = Product::with('ImageProduct')
+                ->where(
+                    'namePro',
+                    'LIKE',
+                    '%' . $text . '%'
+                )
+                ->orderBy('idPro', 'desc')
+                ->paginate(5);
             return $product;
         } catch (Throwable $e) {
             Log::error($e);

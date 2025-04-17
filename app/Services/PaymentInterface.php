@@ -4,5 +4,5 @@ namespace App\Services;
 
 interface PaymentInterface
 {
-    public function makePayment($data);
+    public function createPayment($data);
 }

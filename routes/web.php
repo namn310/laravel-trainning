@@ -28,6 +28,12 @@ use App\Http\Controllers\User\ProductUserController;
 // Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('loginGoogle');
 // Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallback'])->name('callback');
 //user view
+Route::get('vnp', function () {
+    return view('VNPAY.vnpay_return_success');
+});
+Route::get('vnp-error', function () {
+    return view('VNPAY.vnpay_return_error');
+});
 Route::get('pdf', function () {
     return view('template.BillTemplate');
 });
@@ -62,9 +68,9 @@ Route::prefix('')->group(function () {
     })->name('user.contact');
     //Cart
     Route::get('cart', [CartController::class, 'index'])->name('user.cart');
-    Route::get('vn_pay/vnpay_return', [CartController::class, 'saveOrderVnpay'])->name('vnpay.saveOrderToDB');
-    Route::get('vn_pay/vnpay_create_payment', [VNPAYPayment::class, 'createPayment'])->name('vnpay.createPayment');
-    Route::get('vn_pay/vnpay_ipn', [VNPAYPayment::class, 'vnpay_ipn'])->name('vnpay.vnpay_ipn');
+    // Route::get('vn_pay/vnpay_return', [CartController::class, 'saveOrderVnpay'])->name('vnpay.saveOrderToDB');
+    // Route::get('vn_pay/vnpay_create_payment', [VNPAYPayment::class, 'createPayment'])->name('vnpay.createPayment');
+    // Route::get('vn_pay/vnpay_ipn', [VNPAYPayment::class, 'vnpay_ipn'])->name('vnpay.vnpay_ipn');
     Route::get('product/detail/{id}/{name}', [ProductUserController::class, 'getDetail'])->name('user.productDetail');
     Route::get('product/{id}', [ProductUserController::class, 'index'])->name('user.product');
 });

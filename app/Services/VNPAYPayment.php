@@ -10,21 +10,26 @@ use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class VNPAYPayment implements PaymentInterface
 {
-    public function makePayment($data) {}
+    protected $Order;
+    public function __construct(Order $order)
+    {
+        $this->Order = $order;
+    }
     // make url payment VNPAY
     /**
      * @param $request
      * @return string|null
      */
-    public function createPayment(Request $request): string|null
+    public function createPayment($request): string|null
     {
-        Log::info($request);
         error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
         date_default_timezone_set('Asia/Ho_Chi_Minh');
         try {
+            $email = Auth::user()->email;
             $vnp_TxnRef = rand(1, 10000); //Mã giao dịch thanh toán tham chiếu của merchant
             $vnp_Amount = $request->Total; // Số tiền thanh toán
             $vnp_Locale = $request->Language ? $request->Language : 'vn'; //Ngôn ngữ chuyển hướng thanh toán
@@ -43,7 +48,7 @@ class VNPAYPayment implements PaymentInterface
                 "vnp_OrderInfo" => "Thanh toan GD:" . $vnp_TxnRef,
                 "vnp_OrderType" => "other",
                 "vnp_ReturnUrl" => config('vnpay.vnp_Returnurl'),
-                "vnp_TxnRef" => $vnp_TxnRef,
+                "vnp_TxnRef" => $vnp_TxnRef . ($email ? " | User: " . $email : ""),
                 "vnp_ExpireDate" => date("YmdHis", strtotime("+15 minutes")),
                 // "vnp_address" => $address,
                 // "vnp_note" => $note,
@@ -86,19 +91,13 @@ class VNPAYPayment implements PaymentInterface
     // complete payment
     public function CompletePayment()
     {
-        $idCus = 1;
-        $CustomerFind = User::find($idCus);
-        $CustomerEmail = $CustomerFind->email;
-        // kiểm tra URL
         if (isset($_GET['vnp_SecureHash']) && isset($_GET['vnp_TransactionNo'])) {
-            // nếu hóa đơn thanh toán có dùng voucher thì lấy ra id voucher
             $vnp_TxnRef = $_GET['vnp_TxnRef'];
-            $parts = explode("| Voucher: ", $vnp_TxnRef);
-            $voucherId = isset($parts[1]) ? (int)trim($parts[1]) : 0;
-            Log::error(gettype($voucherId));
-            // số tiền thanh toán
+            $parts = explode("| User:: ", $vnp_TxnRef);
+            $email = isset($parts[1]) ? trim($parts[1]) : 0;
+            $idCus = User::where('email', $email)->first();
             $order_amount = $_GET['vnp_Amount'];
-            // biến lưu kết quả trả về
+            // varible save result return
             $result = [];
             $TransactionNo = $_GET['vnp_TransactionNo'] ? $_GET['vnp_TransactionNo'] : 0;
             $vnp_BankTranNo = $_GET['vnp_BankTranNo'] ? $_GET['vnp_BankTranNo'] : 0;
@@ -125,11 +124,11 @@ class VNPAYPayment implements PaymentInterface
             $secureHash = hash_hmac('sha512', $hashData, config('vnpay.vnp_HashSecret'));
             $status = 0;
             /*
-            $status = 1 : Thanh toán thành công,
-            status = 2: Thanh toán không thành công,
-            status = 0: Chữ ký không hợp lệ thanh toán thất bại
+            $status = 1 : Payment success,
+            status = 2: Payment fail,
+            status = 0: Invalid signature => payment faid
             */
-            // Kiểm tra kết quả giao dịch
+            // check result's payments
             if ($secureHash === $vnp_SecureHash) {
                 if ($_GET['vnp_ResponseCode'] == '00') {
                     $status = 1;
@@ -139,17 +138,24 @@ class VNPAYPayment implements PaymentInterface
             } else {
                 $status = 0;
             }
-            // tìm kiếm thông tin đơn hàng vừa lưu vào db
-            // nếu status khác 1 thì thanh toán không thành công thì xóa đơn hàng vừa lưu trong db
+            // Search user's order has been saved into DB with payment method is VNPAY
+            // if status is not equal 1 => payment failed => delete this order
             if ($status !== 1) {
                 try {
                     DB::beginTransaction();
-                    $orderQuery = DB::table('orders')->select('id')->where('idCus', $idCus)->orderby('id', 'desc')->limit(1)->first();
+                    $orderQuery = DB::table('orders')
+                        ->select('id')
+                        ->where([
+                            'idCus' => $idCus,
+                            'thanhtoan' => 'Thanh toán bằng VNPAY'
+                        ])
+                        ->orderby('id', 'desc')
+                        ->first();
                     $idLastOrder = $orderQuery->id;
                     $order = Order::find($idLastOrder);
                     $order->delete();
                     DB::commit();
-                    // thanh toán thất bại
+                    // Payment failed
                     $result['status'] = 0;
                     $result['TransactionNo'] = $TransactionNo;
                     $result['order_amount'] = $order_amount;
@@ -161,59 +167,44 @@ class VNPAYPayment implements PaymentInterface
                     Log::error($e);
                     return 0;
                 }
-            } else {
-                //Dùng voucher xong thì giảm số lượng voucher;
-                DB::beginTransaction();
-                // if ($voucherId > 0) {
-                //     $voucherUser = VoucherUser::where('id_voucher', $voucherId)->first();
-                //     Log::error($voucherUser);
-                //     if ($voucherUser) {
-                //         if ($voucherUser->soluong > 0) {
-                //             Log::error($voucherUser);
-                //             $voucherUser->soluong -= 1;
-                //         }
-                //         if ($voucherUser->soluong === 0) {
-                //             Log::error($voucherUser);
-                //             // status = 0 tức là khả dụng còn = 1 tức là không khả dụng
-                //             $voucherUser->status = 0;
-                //         }
-
-                //         $voucherUser->save();
-                //     }
-                // }
-                DB::commit();
-                // }
-                $orderQuery = DB::table('orders')->select('id')->where('idCus', $idCus)->orderby('id', 'desc')->limit(1)->first();
-                $idLastOrder = $orderQuery->id;
-                // tạo dữ liệu để truyền vào mail gửi thông báo
-                $product = new Order();
-                $totalPrice = $product->getTotalCost($idLastOrder);
-                $OrderDetail = OrderDetail::select()->where('idOrder', $idLastOrder)->get();
-                // $Order = Order::select()->where('id', 8)->get();
-                $Order = Order::find($idLastOrder);
-                $discountVoucher = $product->getVoucher($Order->idVoucher);
-                $dataOrder = [
-                    'Order' => $Order,
-                    'OrderDetail' => $OrderDetail,
-                    'totalPrice' => $totalPrice,
-                    'product' => $product,
-                    'discountVoucher' => $discountVoucher,
-                    'id' => $idLastOrder
-                ];
-                // đẩy vào queue để gửi email đến người dùng
-                // dispatch(new NotifyOrderSuccessfull($CustomerEmail, $dataOrder));
-                $result['status'] = 1;
-                $result['TransactionNo'] = $TransactionNo;
-                $result['order_amount'] = $order_amount;
-                $result['vnp_BankTranNo'] = $vnp_BankTranNo;
-                // Log::error($result);
-                return $result;
             }
-        } else {
-            // có lỗi trong quá trình xử lý
-            DB::rollBack();
-            return 2;
+            // if result code = 1
+            $orderQuery = DB::table('orders')
+                ->select('id')
+                ->where([
+                    'idCus' => $idCus,
+                    'thanhtoan' => 'Thanh toán bằng VNPAY'
+                ])
+                ->orderby('id', 'desc')
+                ->first();
+            $idLastOrder = $orderQuery->id;
+            // make data to tranfer into mail
+            $product = new Order();
+            $totalPrice = $this->Order->getTotalCostOfOrder($idLastOrder);
+            $OrderDetail = OrderDetail::select()
+                ->where('idOrder', $idLastOrder)
+                ->get();
+            $Order = Order::find($idLastOrder);
+            $discountVoucher = $product->getVoucher($Order->idVoucher);
+            $dataOrder = [
+                'Order' => $Order,
+                'OrderDetail' => $OrderDetail,
+                'totalPrice' => $totalPrice,
+                'product' => $product,
+                'discountVoucher' => $discountVoucher,
+                'id' => $idLastOrder
+            ];
+            // use queue to send email notification
+            // dispatch(new NotifyOrderSuccessfull($CustomerEmail, $dataOrder));
+            $result['status'] = 1;
+            $result['TransactionNo'] = $TransactionNo;
+            $result['order_amount'] = $order_amount;
+            $result['vnp_BankTranNo'] = $vnp_BankTranNo;
+            // Log::error($result);
+            return $result;
         }
+        DB::rollBack();
+        return 2;
     }
     public function vnpay_ipn()
     {

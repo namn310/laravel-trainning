@@ -19,7 +19,14 @@ class Order extends Model
     public $timestamp = true;
     public $incrementing = false;
     public $keyType = 'string';
-    protected $fillable = ['idCus', 'status', 'address', 'note', 'thanhtoan', 'idVoucher', 'created_at'];
+    protected $fillable = [
+        'idCus',
+        'status',
+        'address',
+        'note',
+        'thanhtoan',
+        'idVoucher',
+    ];
     use HasFactory;
     protected static function boot()
     {
@@ -32,6 +39,27 @@ class Order extends Model
         });
     }
     /**
+     * Create new order
+     *
+     * @param int $status : Status of order (ví dụ: 0 - pending, 1 - confirmed, v.v.)
+     * @param string $Address : Customer's delivery address.
+     * @param string $note : note of Order (can be null).
+     * @param string $paymentMethod 
+     * @param int $idCus Customer's ID.
+     * @param string $idVoucher Voucher code if has.
+     *
+     * @return void
+     */
+    public function CreateOrder(int $status, string $Address, string $note, string $paymentMethod, int $idCus, string $idVoucher)
+    {
+        try {
+            $order = new Order();
+            $order->status = $status;
+            $order->address = $Address;
+        } catch (Throwable $e) {
+        }
+    }
+    /**
      * get information detail of product
      * @param string $id
      * @return \App\Models\Product|null
@@ -39,7 +67,16 @@ class Order extends Model
     public function getDetailProduct(string $id): Product|null
     {
         try {
-            return Product::with('ImageProduct')->select('idPro', 'namePro', 'count', 'cost', 'discount')->where('idPro', $id)->first();
+            return Product::with('ImageProduct')
+                ->select(
+                    'idPro',
+                    'namePro',
+                    'count',
+                    'cost',
+                    'discount'
+                )
+                ->where('idPro', $id)
+                ->first();
         } catch (Throwable $e) {
             Log::error("GetDetailproduct" . $e);
             return null;
@@ -89,7 +126,13 @@ class Order extends Model
     public function getTotalCostOfProduct(string $idOrderDetail): string|null
     {
         try {
-            $orderDetail = OrderDetail::where('id', $idOrderDetail)->select('id', 'idPro', 'number', 'price')->first();
+            $orderDetail = OrderDetail::where('id', $idOrderDetail)
+                ->select(
+                    'id',
+                    'idPro',
+                    'number',
+                    'price'
+                )->first();
             $discountProduct = $this->getDiscountProduct($orderDetail->idPro);
             if ($discountProduct > 0) {
                 return number_format(($orderDetail->price - ($orderDetail->price * ($discountProduct) / 100)) * $orderDetail->number);
@@ -108,7 +151,13 @@ class Order extends Model
     public function getTotalCostOfOrder(string $id): int|null
     {
         try {
-            $order = OrderDetail::where('idOrder', $id)->select('idOrder', 'number', 'price', 'idPro')->get();
+            $order = OrderDetail::where('idOrder', $id)
+                ->select(
+                    'idOrder',
+                    'number',
+                    'price',
+                    'idPro'
+                )->get();
             $totalCostOfOrder = 0;
             foreach ($order as $row) {
                 $discountProduct = $this->getDiscountProduct($row->idPro);
@@ -132,7 +181,9 @@ class Order extends Model
     public function getListOrderUser(int $id): Collection|null
     {
         try {
-            $order = Order::where('idCus', $id)->orderBy("id", 'desc')->get();
+            $order = Order::where('idCus', $id)
+                ->orderBy("id", 'desc')
+                ->get();
             foreach ($order as $row) {
                 $row['totalCost'] = number_format($this->getTotalCostOfOrder($row->id));
                 $row['OrderDetail'] = $this->getDetailOrder($row->id);
@@ -150,7 +201,15 @@ class Order extends Model
         try {
             $Query = DB::table("orders as o")
                 ->join('users as u', 'u.id', '=', 'o.idCus')
-                ->select('o.id', 'o.status', 'o.created_at', 'o.idCus as IdCusInOrder', 'u.id as IdCusInUser', 'u.name', 'u.phone')
+                ->select(
+                    'o.id',
+                    'o.status',
+                    'o.created_at',
+                    'o.idCus as IdCusInOrder',
+                    'u.id as IdCusInUser',
+                    'u.name',
+                    'u.phone'
+                )
                 ->paginate(20);
             return $Query;
         } catch (Throwable $e) {

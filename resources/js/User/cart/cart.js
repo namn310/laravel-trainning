@@ -145,7 +145,10 @@ function makePaymentVNPAY(data) {
         },
         data: data,
         success: function (response) {
-            console.log(response);
+            if (response.data)
+            {
+                window.location.href = response.data
+            }
         },
     });
 }
@@ -409,7 +412,6 @@ export const renderCart = function () {
                 Total: TotalCostInCartNoFormat(),
                 Cart: cart,
             };
-            console.log(data);
             makePaymentVNPAY(data);
             return;
         });

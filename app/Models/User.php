@@ -271,7 +271,15 @@ class User extends Authenticatable
     public function getDetailUser(int $idUser): ?User
     {
         try {
-            $user = User::where('id', $idUser)->select('id', 'name', 'email', 'phone', 'image')->first();
+            $user = User::where('id', $idUser)
+                ->select(
+                    'id',
+                    'name',
+                    'email',
+                    'phone',
+                    'image'
+                )
+                ->first();
             return $user;
         } catch (Throwable $e) {
             Log::error($e);
@@ -334,7 +342,13 @@ class User extends Authenticatable
     protected function checkOTP($OTP, $email): bool
     {
         try {
-            $check = DB::table("opt_regist_forget_account")->where(['email' => $email, 'OTP' => $OTP])->orderBy('id', 'desc')->first();
+            $check = DB::table("opt_regist_forget_account")
+                ->where([
+                    'email' => $email,
+                    'OTP' => $OTP
+                ])
+                ->orderBy('id', 'desc')
+                ->first();
             if ($check) {
                 return true;
             }

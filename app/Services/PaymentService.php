@@ -13,6 +13,6 @@ class PaymentService
     }
     public function processPayment($data)
     {
-        $this->paymentClass->makePayment($data);
+        return $this->paymentClass->createPayment($data);
     }
 }
