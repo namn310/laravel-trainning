@@ -50,7 +50,7 @@ class Order extends Model
      *
      * @return Order|null
      */
-    public function CreateOrder(int $status, string $Address, string $note, string $paymentMethod, int $idCus, string $idVoucher)
+    public function CreateOrder(int $status, string $Address, ?string $note, string $paymentMethod, int $idCus, ?string $idVoucher): ?Order
     {
         try {
             DB::beginTransaction();
@@ -60,7 +60,7 @@ class Order extends Model
             $order->note = $note;
             $order->thanhtoan = $paymentMethod;
             $order->idCus = $idCus;
-            $order->idVoucher = $idVoucher;
+            $order->idVoucher = $idVoucher ?? null;
             $order->save();
             DB::commit();
             return $order;
@@ -193,7 +193,7 @@ class Order extends Model
     {
         try {
             $order = Order::where('idCus', $id)
-                ->orderBy("id", 'desc')
+                ->orderBy("created_at", 'desc')
                 ->get();
             foreach ($order as $row) {
                 $row['totalCost'] = number_format($this->getTotalCostOfOrder($row->id));

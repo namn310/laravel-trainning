@@ -64,7 +64,8 @@ class VNPAYPayment implements PaymentInterface
             foreach ($inputData as $key => $value) {
                 if ($i == 1) {
                     $hashdata .= '&' . urlencode($key) . "=" . urlencode($value);
-                } else {
+                }
+                if ($i !== 1) {
                     $hashdata .= urlencode($key) . "=" . urlencode($value);
                     $i = 1;
                 }

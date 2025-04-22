@@ -41,7 +41,7 @@ class Product extends Model
      *
      * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator|null 
      */
-    public function getListproduct(): LengthAwarePaginator|null
+    public function getListproduct(): ?LengthAwarePaginator
     {
         try {
             $products = Product::with('ImageProduct')

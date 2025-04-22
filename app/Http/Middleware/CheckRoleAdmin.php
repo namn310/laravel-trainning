@@ -19,8 +19,6 @@ class CheckRoleAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        Log::error('middleware');
-        Log::info(Auth::user());
         if (Auth::user()) {
             if (Auth::user()->role === 'admin') {
                 return $next($request);
