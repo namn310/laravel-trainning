@@ -15,8 +15,6 @@ class HomeController extends Controller
 {
     public function index(Request $request)
     {
-        return view('Admin.HomeAdmin', [
-           
-        ]);
+        return view('Admin.HomeAdmin');
     }
 }

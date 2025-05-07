@@ -14,9 +14,15 @@ use App\Models\User;
 use Throwable;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\ProcessCheckOut;
+use App\Services\OrderService;
 
 class Cart extends Model
 {
+    protected $OrderService;
+    public function __construct(OrderService $service)
+    {
+        $this->OrderService = $service;
+    }
     public function CheckoutModel($request)
     {
         try {
@@ -33,7 +39,7 @@ class Cart extends Model
                 $voucherId = null;
             }
             $order = new Order();
-            $order = $order->CreateOrder(0, $request->Address, $request->Note, $paymentMethod, $id, $voucherId);
+            $order = $this->OrderService->CreateOrder(0, $request->Address, $request->Note, $paymentMethod, $id, $voucherId);
             $idLatestOrder = $order->id;
             foreach ($request->Cart as $product) {
                 $idPro = $product['idPro'];

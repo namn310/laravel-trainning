@@ -8,17 +8,20 @@ use Illuminate\Http\Request;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Throwable;
+use App\Repositories\CategoryRepository;
+use App\Services\CategoryService;
+use Symfony\Component\HttpFoundation\Response as Http;
 
 class CategoryController extends Controller
 {
-    protected $model;
-    public function __construct(Category $category)
+    protected $CategoryService;
+    public function __construct(CategoryService $categorySer)
     {
-        $this->model = $category;
+        $this->CategoryService = $categorySer;
     }
     public function index()
     {
-        $category = Category::paginate(10);
+        $category = $this->CategoryService->getAllHasPaginate();
         return view('Admin.CategoryView')->with('category', $category);
     }
     /**
@@ -28,16 +31,16 @@ class CategoryController extends Controller
     public function store(Request $request): JsonResponse
     {
         try {
-            $result = $this->model->createCategory($request);
+            $result = $this->CategoryService->createCategory($request);
             if (is_array($result)) {
-                return ApiResponse::Error($result, 'Thêm danh mục thành công', 'success', 200);
+                return ApiResponse::Error($result, 'Thêm danh mục thành công', 'success', Http::HTTP_OK);
             }
             if ($result == 'Category has existed !') {
-                return ApiResponse::Success($result, 'Danh mục đã tồn tại !', 'error', 200);
+                return ApiResponse::Success($result, 'Danh mục đã tồn tại !', 'error', Http::HTTP_OK);
             }
-            return ApiResponse::Error(null, 'Có lỗi xảy ra', 'error', 500);
+            return ApiResponse::Error(null, 'Có lỗi xảy ra', 'error', Http::HTTP_INTERNAL_SERVER_ERROR);
         } catch (Throwable $e) {
-            return ApiResponse::Error(null, 'Có lỗi xảy ra', 'error', 500);
+            return ApiResponse::Error(null, 'Có lỗi xảy ra', 'error', Http::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
     /**
@@ -47,16 +50,16 @@ class CategoryController extends Controller
     public function delete(Request $request): JsonResponse
     {
         try {
-            $result = $this->model->deleteCategory($request);
+            $result = $this->CategoryService->deleteCategory($request);
             if ($result == 'true') {
-                return ApiResponse::Success(null, "Xóa danh mục thành công", 'success', 200);
+                return ApiResponse::Success(null, "Xóa danh mục thành công", 'success', Http::HTTP_OK);
             }
             if ($result == 'Not Found') {
-                return ApiResponse::Success(null, "Danh mục không tồn tại", 'error', 200);
+                return ApiResponse::Success(null, "Danh mục không tồn tại", 'error', Http::HTTP_OK);
             }
-            return ApiResponse::Error(null, 'Có lỗi xảy ra', 'error', 500);
+            return ApiResponse::Error(null, 'Có lỗi xảy ra', 'error', Http::HTTP_INTERNAL_SERVER_ERROR);
         } catch (Throwable $e) {
-            return ApiResponse::Error(null, 'Có lỗi xảy ra', 'error', 500);
+            return ApiResponse::Error(null, 'Có lỗi xảy ra', 'error', Http::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
     /**
@@ -66,19 +69,19 @@ class CategoryController extends Controller
     public function update(Request $request): JsonResponse
     {
         try {
-            $result = $this->model->updateCategory($request);
+            $result = $this->CategoryService->updateCategory($request->idCat, $request->only('name'));
             if ($result === 'success') {
-                return ApiResponse::Success(null, "Cập nhật danh mục thành công", 'success', 200);
+                return ApiResponse::Success(null, "Cập nhật danh mục thành công", 'success', Http::HTTP_OK);
             }
             if ($result === 'Not Found') {
-                return ApiResponse::Success(null, "Danh mục không tồn tại", 'error', 200);
+                return ApiResponse::Success(null, "Danh mục không tồn tại", 'error', Http::HTTP_OK);
             }
             if ($result === 'Name has existed') {
-                return ApiResponse::Success(null, "Danh mục đã tồn tại", 'error', 200);
+                return ApiResponse::Success(null, "Danh mục đã tồn tại", 'error', Http::HTTP_OK);
             }
-            return ApiResponse::Error(null, 'Có lỗi xảy ra', 'error', 500);
+            return ApiResponse::Error(null, 'Có lỗi xảy ra', 'error', Http::HTTP_INTERNAL_SERVER_ERROR);
         } catch (Throwable $e) {
-            return ApiResponse::Error(null, 'Có lỗi xảy ra', 'error', 500);
+            return ApiResponse::Error(null, 'Có lỗi xảy ra', 'error', Http::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }
