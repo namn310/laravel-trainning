@@ -115,7 +115,7 @@ $product = product::select()->get();
                     <div class="buttonInforUser">
                         {{-- @if (!Auth::guard('customer')->check()) --}}
                         <a style="text-decoration:none;color:black;font-size: 1.3vw"
-                            class="me-2 ms-2 buttonLogin d-none" href="{{ route('user.login') }}">Đăng
+                            class="me-2 ms-2 buttonLogin" href="{{ route('user.login') }}">Đăng
                             Nhập</a><span></span>
                         {{-- @else --}}
                         <div class="nav-item dropdown me-5 d-none" id="dropdown-user">
