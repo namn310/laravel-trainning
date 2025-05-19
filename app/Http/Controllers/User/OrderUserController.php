@@ -11,16 +11,19 @@ use App\Models\Product;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use App\Http\Resources\OrderUserCollection;
+use App\Services\OrderService;
 
 class OrderUserController extends Controller
 {
+    protected $OrderService;
+    public function __construct(OrderService $service)
+    {
+        $this->OrderService = $service;
+    }
     public function getOrderList()
     {
         $idCus = Auth::user()->id;
-        $model = new Order();
-        $Order = $model->getListOrderUser($idCus);
+        $Order = $this->OrderService->getListOrderUser($idCus);
         return view('User.OrderView', ['Order' => $Order]);
-        // return new OrderUserCollection(($Order));
-        // return response()->json($Order[0]->OrderDetail[0]->ProductDetail->ImageProduct[0]->image);
     }
 }

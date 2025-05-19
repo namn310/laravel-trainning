@@ -5,21 +5,25 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Responses\ApiResponse;
 use App\Models\Order;
+use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Throwable;
+use Symfony\Component\HttpFoundation\Response as Http;
 
 class OrderController extends Controller
 {
     protected $Order;
-    public function __construct(Order $order)
+    protected $OrderService;
+    public function __construct(Order $order, OrderService $service)
     {
         $this->Order = $order;
+        $this->OrderService = $service;
     }
     public function index()
     {
-        $Order = $this->Order->getListInforOfOrder();
+        $Order = $this->OrderService->getListInforOfOrder();
         return view('Admin.OrderView', ['Order' => $Order]);
     }
     /**
@@ -30,15 +34,15 @@ class OrderController extends Controller
     public function getDetailOrder(string $idOrder)
     {
         try {
-            $result = $this->Order->detailOfOrder($idOrder);
+            $result = $this->OrderService->detailOfOrder($idOrder);
+            Log::info($result);
             if ($result) {
-                // return ApiResponse::Error($result, 'Success', 'success', 200);
                 return view('Admin.DetailOrderView', ['order' => $result]);
             }
-            return ApiResponse::Error(null, 'Error', 'error', 500);
+            return ApiResponse::Error(null, 'Error', 'error', Http::HTTP_INTERNAL_SERVER_ERROR);
         } catch (Throwable $e) {
             Log::error($e);
-            return ApiResponse::Error(null, 'Có lỗi xảy ra', 'error', 500);
+            return ApiResponse::Error(null, 'Có lỗi xảy ra', 'error', Http::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
     /**
@@ -49,13 +53,13 @@ class OrderController extends Controller
     public function delivery(string $id): JsonResponse
     {
         try {
-            $result = $this->Order->deliveryOrder($id);
+            $result = $this->OrderService->deliveryOrder($id);
             if ($result) {
-                return ApiResponse::Success(null, 'Success', 'success', 200);
+                return ApiResponse::Success(null, 'Success', 'success', Http::HTTP_OK);
             }
-            return ApiResponse::Error(null, 'Error', 'error', 500);
+            return ApiResponse::Error(null, 'Error', 'error', Http::HTTP_INTERNAL_SERVER_ERROR);
         } catch (Throwable $e) {
-            return ApiResponse::Error(null, 'Error', 'error', 500);
+            return ApiResponse::Error(null, 'Error', 'error', Http::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }
